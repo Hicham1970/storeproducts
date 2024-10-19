@@ -1,37 +1,88 @@
-/* eslint-disable no-unused-vars */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Product from "./Product";
-import Search from "./Search";
+
 export default function ProductList() {
   const [productList, setProductList] = useState([]);
+  const [categoriesList, setCategoriesList] = useState([]);
   const [searchInput, setSearchInput] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [allProducts, setAllProducts] = useState([]);
 
-  // display products in the table
-  const displayProducts = () => {
-    const productTemp = productList.filter(
-      (product) =>
-        product.title.toLowerCase().startsWith(searchInput.toLowerCase()) ||
-        product.id.toString().startsWith(searchInput) ||
-        product.description.toLowerCase().startsWith(searchInput.toLowerCase())
-    );
-    return productTemp.map((product, key) => {
-      return <Product key={key} product={product} />;
-    });
-  };
-
-  // fetch products from the Api
-  const getProducts = () => {
-    fetch("https://fakestoreapi.com/products")
-      .then((res) => res.json())
-      .then((res) => setProductList(res))
-      .catch((error) =>
-        console.error("Erreur lors de la récupération des produits:", error)
-      );
-  };
+  // Récupération des données au montage
   useEffect(() => {
-    getProducts();
+    const fetchProducts = async () => {
+      const productsRes = await fetch("https://fakestoreapi.com/products");
+      const productsData = await productsRes.json();
+      setAllProducts(productsData);
+      setProductList(productsData);
+    };
+
+    const fetchCategories = async () => {
+      const categoriesRes = await fetch(
+        "https://fakestoreapi.com/products/categories"
+      );
+      const categoriesData = await categoriesRes.json();
+      setCategoriesList(categoriesData);
+    };
+
+    fetchProducts();
+    fetchCategories();
   }, []);
 
+  // Logique de filtrage
+  const applyFilters = useCallback(() => {
+    let filteredProducts = [...allProducts]; // Copier le tableau pour éviter de modifier l'original
+
+    if (selectedCategory) {
+      filteredProducts = filteredProducts.filter(
+        (product) => product.category === selectedCategory
+      );
+    }
+
+    if (searchInput) {
+      const searchTerm = searchInput.toLowerCase();
+      filteredProducts = filteredProducts.filter(
+        (product) =>
+          product.title.toLowerCase().includes(searchTerm) ||
+          product.id.toString().includes(searchTerm) ||
+          product.description.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    setProductList(filteredProducts);
+  }, [selectedCategory, searchInput, allProducts]);
+
+  // Appliquer les filtres à chaque changement
+  useEffect(() => {
+    applyFilters();
+  }, [selectedCategory, searchInput, applyFilters, allProducts]);
+
+  // Gestion du clic sur les catégories
+  const filterProductsByCategory = (category) => {
+    setSelectedCategory(category);
+  };
+
+  // Affichage des catégories
+  const displayCategories = () => {
+    return categoriesList.map((category) => (
+      <button
+        key={category}
+        className="btn btn-secondary"
+        onClick={() => filterProductsByCategory(category)}
+      >
+        {category}
+      </button>
+    ));
+  };
+
+  // Affichage des produits
+  const displayProducts = () => {
+    return productList.map((product, key) => (
+      <Product key={key} product={product} />
+    ));
+  };
+
+  // Gestion de la recherche (si nécessaire)
   const handleSearch = (e) => {
     e.preventDefault();
     const searchValue = document.querySelector("#search").value;
@@ -58,9 +109,13 @@ export default function ProductList() {
             />
           </div>
         </div>
+        <div className="row g-3 align-items-center">
+          <h5>Categories:</h5>
+          <hr />
+          <div className="btn btn-group">{displayCategories()}</div>
+        </div>
       </form>
       <h1>Products :</h1>
-
       <table className="table">
         <thead>
           <tr>
@@ -75,7 +130,6 @@ export default function ProductList() {
         </thead>
         <tbody>{displayProducts()}</tbody>
       </table>
-      <Product />
     </div>
   );
 }
