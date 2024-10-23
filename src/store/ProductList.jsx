@@ -59,20 +59,38 @@ export default function ProductList() {
 
   // Gestion du clic sur les catégories
   const filterProductsByCategory = (category) => {
-    setSelectedCategory(category);
+    // Si on clique sur la catégorie déjà sélectionnée, on la désélectionne
+    if (category === selectedCategory) {
+      setSelectedCategory(null);
+    } else {
+      setSelectedCategory(category);
+    }
   };
 
   // Affichage des catégories
+  // Dans la fonction displayCategories, ajouter un bouton "Tous"
   const displayCategories = () => {
-    return categoriesList.map((category) => (
-      <button
-        key={category}
-        className="btn btn-secondary"
-        onClick={() => filterProductsByCategory(category)}
-      >
-        {category}
-      </button>
-    ));
+    return (
+      <>
+        <button
+          className="btn btn-secondary"
+          onClick={() => setSelectedCategory(null)}
+        >
+          Tous
+        </button>
+        {categoriesList.map((category) => (
+          <button
+            key={category}
+            className={`btn btn-secondary ${
+              selectedCategory === category ? "active" : ""
+            }`}
+            onClick={() => filterProductsByCategory(category)}
+          >
+            {category}
+          </button>
+        ))}
+      </>
+    );
   };
 
   // Affichage des produits
@@ -84,7 +102,6 @@ export default function ProductList() {
 
   // Gestion de la recherche (si nécessaire)
   const handleSearch = (e) => {
-    e.preventDefault();
     const searchValue = document.querySelector("#search").value;
     setSearchInput(searchValue);
   };
@@ -92,7 +109,11 @@ export default function ProductList() {
   return (
     <div className="container-fluide mx-auto w-75 my-3">
       <h2>Search :</h2>
-      <form>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+        }}
+      >
         <div className="row g-3 align-items-center">
           <div className="col-auto">
             <label className="col-form-label">Search</label>
