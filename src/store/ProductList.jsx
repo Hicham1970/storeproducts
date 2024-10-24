@@ -76,7 +76,7 @@ export default function ProductList() {
           className="btn btn-secondary"
           onClick={() => setSelectedCategory(null)}
         >
-          Tous
+          All Products
         </button>
         {categoriesList.map((category) => (
           <button
